@@ -35,44 +35,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Let's register the user.
-        // In truth, it may be better to keep a flag in preferences that tells us
-        // whether we have already registered?
-
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        // set your desired log level
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient httpClient = new OkHttpClient.Builder()
-                .addInterceptor(logging)
-                .build();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://luca-teaching.appspot.com/weather/")
-                .addConverterFactory(GsonConverterFactory.create())    //parse Gson string
-                .client(httpClient)    //add logging
-                .build();
-
-        WeatherService service = retrofit.create(WeatherService.class);
-
-        Call<WeatherResponse> queryResponseCall =
-                service.registerUser();
-
-        //Call retrofit asynchronously
-        queryResponseCall.enqueue(new Callback<WeatherResponse>() {
-            @Override
-            public void onResponse(Response<WeatherResponse> response) {
-                Log.i(LOG_TAG, "Code is: " + response.code());
-                Log.i(LOG_TAG, "The result is: " + response.body().response);
-                con = response.body().response.conditions;
-                System.out.println(con.tempF);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                // Log error here since request failed
-            }
-        });
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
@@ -123,32 +85,96 @@ public class MainActivity extends AppCompatActivity {
         Call<WeatherResponse> registerUser();
     }
 
-    public void getWeather(View v) {
-        TextView t = (TextView) findViewById(R.id.cityText);
-        t.setVisibility(View.VISIBLE);
-        ObservationLocation loc = con.observationLocation;
-        t.setText("City: " + loc.city);
-        t = (TextView) findViewById(R.id.elevationtext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Elevation: " + loc.elevation);
+    public void hideText(){
+        TextView t = (TextView) findViewById(R.id.elevationtext);
+        t.setVisibility(View.INVISIBLE);
         t = (TextView) findViewById(R.id.temperatureFtext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Temperature (F): " + con.tempF);
+        t.setVisibility(View.INVISIBLE);
         t = (TextView) findViewById(R.id.temperatureCtext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Temperature (C): " + con.tempC);
+        t.setVisibility(View.INVISIBLE);
         t = (TextView) findViewById(R.id.humiditytext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Relative Humidity: " + con.relativeHumidity);
+        t.setVisibility(View.INVISIBLE);
         t = (TextView) findViewById(R.id.windtext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Wind Speed (mph): " + con.windMph);
+        t.setVisibility(View.INVISIBLE);
         t = (TextView) findViewById(R.id.gusttext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Wind Gust Speed (mph): " + con.windGustMph);
+        t.setVisibility(View.INVISIBLE);
         t = (TextView) findViewById(R.id.weathertext);
-        t.setVisibility(View.VISIBLE);
-        t.setText("Weather: " + con.weather);
+        t.setVisibility(View.INVISIBLE);
+    }
+
+    public void getWeather(View v) {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        // set your desired log level
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .addInterceptor(logging)
+                .build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://luca-teaching.appspot.com/weather/")
+                .addConverterFactory(GsonConverterFactory.create())    //parse Gson string
+                .client(httpClient)    //add logging
+                .build();
+
+        WeatherService service = retrofit.create(WeatherService.class);
+
+        Call<WeatherResponse> queryResponseCall =
+                service.registerUser();
+
+        //Call retrofit asynchronously
+        queryResponseCall.enqueue(new Callback<WeatherResponse>() {
+            @Override
+            public void onResponse(Response<WeatherResponse> response) {
+                Log.i(LOG_TAG, "Code is: " + response.code());
+                if(response.code() == 500){
+                    TextView t = (TextView) findViewById(R.id.cityText);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Server Error. Please press Get Weather Conditions to try again.");
+                    hideText();
+                }
+                else if(response.body().response.result.equals("error")){
+                    Log.i(LOG_TAG, "The result is: " + response.body().response);
+                    TextView t = (TextView) findViewById(R.id.cityText);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Application Error. Please press Get Weather Conditions to try again.");
+                    hideText();
+                }
+                else if(response.code() == 200 && response.body().response.result.equals("ok")) {
+                    Log.i(LOG_TAG, "The result is: " + response.body().response);
+                    con = response.body().response.conditions;
+                    TextView t = (TextView) findViewById(R.id.cityText);
+                    t.setVisibility(View.VISIBLE);
+                    ObservationLocation loc = con.observationLocation;
+                    t.setText("City: " + loc.city);
+                    t = (TextView) findViewById(R.id.elevationtext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Elevation: " + loc.elevation);
+                    t = (TextView) findViewById(R.id.temperatureFtext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Temperature (F): " + con.tempF);
+                    t = (TextView) findViewById(R.id.temperatureCtext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Temperature (C): " + con.tempC);
+                    t = (TextView) findViewById(R.id.humiditytext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Relative Humidity: " + con.relativeHumidity);
+                    t = (TextView) findViewById(R.id.windtext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Wind Speed (mph): " + con.windMph);
+                    t = (TextView) findViewById(R.id.gusttext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Wind Gust Speed (mph): " + con.windGustMph);
+                    t = (TextView) findViewById(R.id.weathertext);
+                    t.setVisibility(View.VISIBLE);
+                    t.setText("Weather: " + con.weather);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                // Log error here since request failed
+            }
+        });
     }
 
 }
