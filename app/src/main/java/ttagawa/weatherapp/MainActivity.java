@@ -173,6 +173,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Throwable t) {
                 // Log error here since request failed
+                TextView tv = (TextView) findViewById(R.id.cityText);
+                tv.setVisibility(View.VISIBLE);
+                tv.setText("Error. Please press Get Weather Conditions to try again.");
+                hideText();
             }
         });
     }
